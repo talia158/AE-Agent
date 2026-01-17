@@ -1,4 +1,5 @@
 import argparse
+import os
 import re
 
 from bs4 import BeautifulSoup
@@ -9,12 +10,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Convert an HTML file to Markdown.")
     parser.add_argument(
         "--input",
-        default="Raw Guide.html",
+        default=os.path.join("utils", "data", "Raw Guide.html"),
         help="Path to the HTML input file.",
     )
     parser.add_argument(
         "--output",
-        default="ae_docs_cleaned.md",
+        default=os.path.join("utils", "data", "ae_docs_cleaned.md"),
         help="Path to the Markdown output file.",
     )
     return parser.parse_args()
@@ -36,6 +37,10 @@ def clean_ae_markdown(text: str) -> str:
 def main() -> None:
     args = parse_args()
 
+    if os.path.exists(args.output) and os.path.getsize(args.output) > 0:
+        print("Output already exists; skipping conversion.")
+        return
+
     with open(args.input, "r", encoding="utf-8") as f:
         html_content = f.read()
 
@@ -48,6 +53,7 @@ def main() -> None:
     markdown_text = md(str(soup), heading_style="ATX")
     markdown_text = clean_ae_markdown(markdown_text)
 
+    os.makedirs(os.path.dirname(args.output), exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:
         f.write(markdown_text)
 

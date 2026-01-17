@@ -1,0 +1,60 @@
+services:
+  convert_to_md:
+    build:
+      context: utils/convert_to_md
+    command: [
+      "--input", "/data/utils/data/Raw Guide.html",
+      "--output", "/data/utils/data/ae_docs_cleaned.md"
+    ]
+    volumes:
+      - .:/data
+
+  hierarchical_chunking:
+    build:
+      context: utils/hierarchical_chunking
+    command: [
+      "--input", "/data/utils/data/ae_docs_cleaned.md",
+      "--output", "/data/utils/data/ae_docs_chunks.jsonl"
+    ]
+    volumes:
+      - .:/data
+    depends_on:
+      convert_to_md:
+        condition: service_completed_successfully
+
+  semantic_encoder:
+    build:
+      context: utils/semantic_encoder
+    command: [
+      "--input", "/data/utils/data/ae_docs_chunks.jsonl",
+      "--persist-dir", "/data/chroma",
+      "--collection", "ae-scripting-guide"
+    ]
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - .:/data
+      - chroma_data:/data/chroma
+    depends_on:
+      hierarchical_chunking:
+        condition: service_completed_successfully
+
+  retrieval_qa:
+    build:
+      context: utils/retrieval_qa
+    command: [
+      "--query", "How do I import footage in ExtendScript?"
+    ]
+    environment:
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CHROMA_PERSIST_DIR=/data/chroma
+      - CHROMA_COLLECTION=ae-scripting-guide
+    volumes:
+      - .:/data
+      - chroma_data:/data/chroma
+    depends_on:
+      semantic_encoder:
+        condition: service_completed_successfully
+
+volumes:
+  chroma_data:
