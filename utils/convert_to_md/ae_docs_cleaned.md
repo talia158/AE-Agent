@@ -1,20 +1,3 @@
-
-
-Offline Docs - After Effects Scripting Guide
-
- 
-
- 
- 
- Welcome to the new docsforadobe guide!
-
- This is a work in progress.
-
- Please provide all feedback via
- [**the org's discussion forum**](https://github.com/orgs/docsforadobe/discussions).
-
- 
-
 # After Effects Scripting Guide
 
  
