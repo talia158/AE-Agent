@@ -1,0 +1,47 @@
+services:
+  dataset_gen_service:
+    build:
+      context: ./dataset_gen_service
+    command: [
+      "--input", "/data/utils/data/ae_docs_chunks.jsonl"
+    ]
+    env_file:
+      - ../.env
+    volumes:
+      - ..:/data
+
+  testing_eval_service:
+    build:
+      context: ./testing_eval_service
+    depends_on:
+      retrieval_qa:
+        condition: service_healthy
+    env_file:
+      - ../.env
+    environment:
+      - CHROMA_PERSIST_DIR=/data/chroma
+      - CHROMA_COLLECTION=ae-scripting-guide
+      - RETRIEVAL_QA_URL=http://retrieval_qa:8000/query
+    volumes:
+      - ..:/data
+
+  retrieval_qa:
+    build:
+      context: ../utils/retrieval_qa
+    command: [
+      "--serve",
+      "--host", "0.0.0.0",
+      "--port", "8000"
+    ]
+    env_file:
+      - ../.env
+    environment:
+      - CHROMA_PERSIST_DIR=/data/chroma
+      - CHROMA_COLLECTION=ae-scripting-guide
+    volumes:
+      - ..:/data
+    healthcheck:
+      test: ["CMD-SHELL", "python - <<'PY'\nimport urllib.request\ntry:\n    urllib.request.urlopen('http://localhost:8000/health', timeout=2)\n    print('ok')\nexcept Exception:\n    raise SystemExit(1)\nPY"]
+      interval: 5s
+      timeout: 3s
+      retries: 20

@@ -16,6 +16,8 @@ services:
       "--input", "/data/utils/data/ae_docs_cleaned.md",
       "--output", "/data/utils/data/ae_docs_chunks.jsonl"
     ]
+    env_file:
+      - ./.env
     volumes:
       - .:/data
     depends_on:
@@ -43,7 +45,9 @@ services:
     build:
       context: utils/retrieval_qa
     command: [
-      "--query", "How do I import footage in ExtendScript?"
+      "--serve",
+      "--host", "0.0.0.0",
+      "--port", "8000"
     ]
     environment:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
